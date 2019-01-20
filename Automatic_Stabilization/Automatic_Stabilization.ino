@@ -50,6 +50,8 @@ uint8_t teapotPacket[14] = { '$', 0x02, 0,0, 0,0, 0,0, 0,0, 0x00, 0x00, '\r', '\
 
 int angleX;
 int angleY;
+int posX = 90;
+int posY = 90;
 
 // ================================================================
 // ===               INTERRUPT DETECTION ROUTINE                ===
@@ -78,7 +80,7 @@ void setup() {
     // initialize serial communication
     // (115200 chosen because it is required for Teapot Demo output, but it's
     // really up to you depending on your project)
-    Serial.begin(115200);
+    Serial.begin(38400);
     while (!Serial); // wait for Leonardo enumeration, others continue immediately
 
     // NOTE: 8MHz or slower host processors, like the Teensy @ 3.3v or Ardunio
@@ -197,9 +199,19 @@ void loop() {
         blinkState = !blinkState;
         digitalWrite(LED_PIN, blinkState);
     }
-
-      servoX.write(angleX + 90);   
-      servoY.write(angleY + 90);
+      if (posX < 180 and angleX > 0) {
+          posX++;
+      } else if (posX > 0 and angleX < 0) {
+          posX--; 
+      }
+      if (posY < 180 and angleY > 0) {
+          posY++;
+      } else if (posY > 0 and angleY < 0) {
+          posY--; 
+      }
+      servoX.write(posX);   
+      servoY.write(posY);
+      delay(15);
 }
 
 // Roll is the bottom motor, Pitch is top
