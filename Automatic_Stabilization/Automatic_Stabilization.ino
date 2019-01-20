@@ -211,7 +211,7 @@ void loop() {
       }
       servoX.write(posX);   
       servoY.write(posY);
-      delay(15);
+      delay(5);
 }
 
 // Roll is the bottom motor, Pitch is top

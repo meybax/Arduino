@@ -147,18 +147,11 @@ void setup() {
     servoX.write(posX);
     servoY.write(posY);
 
-    Wire.begin(9); 
-    // Attach a function to trigger when something is received.
-    Wire.onReceive(receiveEvent);
 }
     
 // ================================================================
 // ===                    MAIN PROGRAM LOOP                     ===
 // ================================================================
-
-void receiveEvent(int bytes) {
-  alt = Wire.read();    // read one character from the I2C
-}
 
 void loop() {
     // if programming failed, don't try to do anything
@@ -209,12 +202,6 @@ void loop() {
         blinkState = !blinkState;
         digitalWrite(LED_PIN, blinkState);
     }
-
-      if(alt >= 10) {
-        servoX.write(0);
-        servoY.write(0);
-        while(1);   
-      }
       
       if(posX < (angleX + 90)) {
           posX += 1;
