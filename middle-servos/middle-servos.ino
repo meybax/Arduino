@@ -52,13 +52,6 @@ int angleX;
 int angleY;
 int posX = 1500;
 int posY = 1500;
-int dirX;
-int dirY;
-int countX = 0;
-int countY = 0;
-int wait_global = 20;
-int waitX = wait_global;
-int waitY = wait_global;
 
 // ================================================================
 // ===               INTERRUPT DETECTION ROUTINE                ===
@@ -109,8 +102,8 @@ void setup() {
     devStatus = mpu.dmpInitialize();
 
     // supply your own gyro offsets here, scaled for min sensitivity
-    mpu.setXGyroOffset(150);
-    mpu.setYGyroOffset(70);
+    mpu.setXGyroOffset(220);
+    mpu.setYGyroOffset(76);
     mpu.setZGyroOffset(-85);
     mpu.setZAccelOffset(1788); // 1688 factory default for my test chip
 
@@ -148,10 +141,8 @@ void setup() {
     servoX.attach(5);
     servoY.attach(9);
 
-    servoX.writeMicroseconds(posX);
-    servoY.writeMicroseconds(posY);
-
-    delay(500);
+    servoX.writeMicroseconds(1500);
+    servoY.writeMicroseconds(1500);
 
 }
     
@@ -162,104 +153,6 @@ void setup() {
 void loop() {
     // if programming failed, don't try to do anything
     if (!dmpReady) return;
-
-    // wait for MPU interrupt or extra packet(s) available
-    // reset interrupt flag and get INT_STATUS byte
-    mpuInterrupt = false;
-    mpuIntStatus = mpu.getIntStatus();
-
-    // get current FIFO count
-    fifoCount = mpu.getFIFOCount();
-
-    // check for overflow (this should never happen unless our code is too inefficient)
-    if ((mpuIntStatus & 0x10) || fifoCount == 1024) {
-        // reset so we can continue cleanly
-        mpu.resetFIFO();
-        Serial.println(F("FIFO overflow!"));
-
-    // otherwise, check for DMP data ready interrupt (this should happen frequently)
-    } else if (mpuIntStatus & 0x02) {
-        // wait for correct available data length, should be a VERY short wait
-        while (fifoCount < packetSize) fifoCount = mpu.getFIFOCount();
-
-        // read a packet from FIFO
-        mpu.getFIFOBytes(fifoBuffer, packetSize);
-        
-        // track FIFO count here in case there is > 1 packet available
-        // (this lets us immediately read more without waiting for an interrupt)
-        fifoCount -= packetSize;
-
-        #ifdef OUTPUT_READABLE_YAWPITCHROLL
-            // display Euler angles in degrees
-            mpu.dmpGetQuaternion(&q, fifoBuffer);
-            mpu.dmpGetGravity(&gravity, &q);
-            mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-            Serial.print("ypr\t");
-            Serial.print(ypr[0] * 180/M_PI);
-            Serial.print("\t");
-            angleY = ypr[1] * 180/M_PI;
-            Serial.print(angleY);
-            Serial.print("\t");
-            angleX = ypr[2] * 180/M_PI;
-            Serial.println(angleX);
-
-            if (countX >= waitX) {
-                if (posX < 2000 and angleX > 0) {
-                    dirX = 1;
-                } else if (posX > 1000 and angleX < 0) {
-                    dirX = -1; 
-                } 
-                posX += dirX;
-                servoX.writeMicroseconds(posX);
-
-                countX = 0;
-                waitX = wait_global;
-            } else if (angleX * dirX < 0) {
-                dirX *= -1;
-                posX += dirX;
-                servoX.writeMicroseconds(posX);
-                
-                waitX = wait_global - waitX + countX;
-                if (waitX > wait_global) {
-                    waitX = wait_global;
-                }
-                countX = 0;
-            } else {
-                countX++;
-            }
-
-            if (countY >= waitY) {
-                if (posY < 2000 and angleY > 0) {
-                    dirY = 1;
-                } else if (posY > 1000 and angleY < 0) {
-                    dirY = -1; 
-                }
-                posY += dirY;
-                servoY.writeMicroseconds(posY);
-
-                countY = 0;
-                waitY = wait_global;
-            } else if (angleY * dirY < 0) {
-                dirY *= -1;
-                posY += dirY;
-                servoY.writeMicroseconds(posY);
-                
-                waitY = wait_global - waitY + countY;
-                if (waitY> wait_global) {
-                    waitY = wait_global;
-                }
-                countY = 0;
-            } else {
-                countY++;
-            }
-            
-        #endif
-        
-        // blink LED to indicate activity
-        blinkState = !blinkState;
-        digitalWrite(LED_PIN, blinkState);
-    }
-
 }
 
 // Roll is the bottom motor, Pitch is top
